@@ -67,7 +67,6 @@ def draw_Bezier(P, nsteps):
             p = eval_Bezier1(P, t)
         elif (len(P) == 3):
             p = eval_Bezier2(P, t)
-        p = eval_Bezier2 (P, t)
         draw_line (canvas, xi, yi, p[0], p[1], rgb_col (255,0,0))
         draw_small_square (xi, yi, rgb_col (255,255,0))
         xi = p [0]

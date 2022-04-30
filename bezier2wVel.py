@@ -66,7 +66,6 @@ def draw_Bezier(P, nsteps):
             p = eval_Bezier1(P, t)
         elif (len(P) == 3):
             p = eval_Bezier2(P, t)
-        p = eval_Bezier2 (P, t)
         draw_line (canvas, xi, yi, p[0], p[1], rgb_col (255,0,0))
         draw_small_square (xi, yi, rgb_col (255,255,0))
         xi = p [0]
@@ -79,6 +78,7 @@ def draw_Bezier(P, nsteps):
 def do_animation (t):
     global animation_done
     global V_pos
+    global V_vec
 
     v_factor = 5 #reparameterization
     u = t/v_factor
@@ -90,10 +90,14 @@ def do_animation (t):
         
         # (2 p_0 - 4 p_1 + 2 p_2) t - 2 p_0 + 2 p_1 
 
-        V_vec[0] = ((2*B2[0][0] - 4*B2[1][0] + 2*B2[2][0])*u - 2*B2[0][0] + 2*B2[1][0]) / v_factor
-        V_vec[1] = ((2*B2[0][1] - 4*B2[1][1] + 2*B2[2][1])*u - 2*B2[0][1] + 2*B2[1][1]) / v_factor
+        V_vec = eval_dBezier2(B2, u, v_factor)
         V_pos = eval_Bezier2(B2, u)[:]
         
+def eval_dBezier2(P, u, v_factor):
+    res = [0.0,0.0]
+    for xy in range (2):
+        res[xy] = ((2*P[0][xy] - 4*P[1][xy] + 2*P[2][xy])*u - 2*P[0][xy] + 2*P[1][xy]) / v_factor
+    return res
 
 
 def draw_scene ():
