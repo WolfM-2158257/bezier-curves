@@ -15,6 +15,9 @@ B2 =    [[0.0, 0.0], # p0
         [7.0, 0.0],  # p1
         [1.0, 4.0]]  # p2
 
+V_vec = []
+V_pos = []
+
 window = Tk()
 canvas = Canvas(window, width = vp_width, height=vp_height, bg=rgb_col(0,0,0))
 canvas.pack()
@@ -30,19 +33,11 @@ def draw_small_square(xc, yc, fill_col):
     draw_line(canvas, xc+size, yc-size, xc+size, yc+size, fill_col)
 
 
-def do_animation (t):
-    global animation_done
-    duration = 20
-    if (t > duration): # animation stops at t = duration
-        animation_done=True
-    else:
-        B1[1][0] = 7.0 - t
-        # B1[1][1] = 2.0 + 3*t/duration
-
-
-
 def init_scene():
-    # no data inits needed
+    V_pos.append(0.0)
+    V_pos.append(0.0)
+    V_vec.append(0.0)
+    V_vec.append(0.0)
     do_animation (0.0)
     draw_scene();
 
@@ -81,10 +76,34 @@ def draw_Bezier(P, nsteps):
         draw_small_square(P[i][0], P[i][1], rgb_col(0,255, 0))
 
 
+def do_animation (t):
+    global animation_done
+    global V_pos
+
+    v_factor = 5 #reparameterization
+    u = t/v_factor
+    if (t > v_factor): # animation stops at t = v_factor
+        animation_done = True
+    else:
+        #B2[1][0] = 7.0 - t
+        #B2[1][1] = 0.0 + 3*t/v_factor
+        
+        # (2 p_0 - 4 p_1 + 2 p_2) t - 2 p_0 + 2 p_1 
+
+        V_vec[0] = ((2*B2[0][0] - 4*B2[1][0] + 2*B2[2][0])*u - 2*B2[0][0] + 2*B2[1][0]) / v_factor
+        V_vec[1] = ((2*B2[0][1] - 4*B2[1][1] + 2*B2[2][1])*u - 2*B2[0][1] + 2*B2[1][1]) / v_factor
+        V_pos = eval_Bezier2(B2, u)[:]
+        
+
+
 def draw_scene ():
     draw_grid(canvas)
     draw_axis(canvas)
     draw_Bezier(B2, 20)
+    GREEN = rgb_col (0,255,0)
+    draw_dot (canvas, V_pos[0], V_pos[1], GREEN)
+    draw_line (canvas, V_pos[0], V_pos[1], 
+                V_pos[0] + V_vec[0], V_pos[1] + V_vec[1], GREEN)
 
 
 init_time = time.perf_counter()

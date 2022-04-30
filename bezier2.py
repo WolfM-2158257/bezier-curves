@@ -28,12 +28,12 @@ def draw_small_square(xc, yc, fill_col):
 
 def do_animation (t):
     global animation_done
-    duration = 20
+    duration = 5
     if (t > duration): # animation stops at t = duration
         animation_done=True
     else:
         B1[1][0] = 7.0 - t
-        # B1[1][1] = 2.0 + 3*t/duration
+        B1[1][1] = 0.0 + 6*t/duration
 
 
 
