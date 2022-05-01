@@ -78,19 +78,22 @@ def eval_Bezier3(P, t):
             P[1][xy] + 3*(1-t) * t**2 * P[2][xy] + t ** 3 * P[3][xy]
     return res
 
-def eval_dBezier2(P, u, v_factor):
+
+def eval_dBezier2(P, u):
     res = [0.0, 0.0]
     for xy in range(2):
         res[xy] = ((2*P[0][xy] - 4*P[1][xy] + 2*P[2][xy])
-                   * u - 2*P[0][xy] + 2*P[1][xy]) / v_factor
+                   * u - 2*P[0][xy] + 2*P[1][xy])
     return res
+
 
 def eval_dBezier3(P, t, v_factor):
     res = [0.0, 0.0]
     for xy in range(2):
-        res[xy] = (-3*(1-t)**2*P[0][xy] + (-6*(1-t)*t + 3*(1-t)**2) * \
-            P[1][xy] + (-3*t**2 + 6*(1-t)*t)*P[2][xy] + 3*t**2*P[3][xy]) / v_factor
+        res[xy] = (-3*(1-t)**2*P[0][xy] + (-6*(1-t)*t + 3*(1-t)**2) *
+                   P[1][xy] + (-3*t**2 + 6*(1-t)*t)*P[2][xy] + 3*t**2*P[3][xy]) * v_factor
     return res
+
 
 def draw_Bezier(P, nsteps):
     xi = P[0][0]
@@ -113,66 +116,70 @@ def draw_Bezier(P, nsteps):
     for i in range(len(P)):
         draw_small_square(P[i][0], P[i][1], rgb_col(0, 255, 0))
 
+
+def d_arc_length_exact(t):
+    root = math.sqrt(4*t**2+1)
+    return root
+
+
 def arc_length_exact(t):
     root = math.sqrt(4*t**2+1)
+    return 1/2*root*t + 1/4*math.log(root + 2*t)
 
-def do_animation(t):
-    global animation_done
-    global V_pos
-    global V_vec
 
-    v_factor = 5  # reparameterization
-    u = t/v_factor
-    if (t > v_factor):  # animation stops at t = v_factor
-        animation_done = True
-    else:
-        V_vec = eval_dBezier3(B3, u, v_factor)
-        V_pos = eval_Bezier3(B3, u)
-
-def f(t):
-    p = eval_dBezier3(B3, t, 1)
-    return math.sqrt(p[0]**2 + p[1]**2)
-
-def generate_Riemann_reg_grid(x, n, a, b):
-    delta_x = (b-a)/n
-    for i in range(n+1):
-        x.append(a + i*delta_x)
-
-def Simpson_sum(x, a, b):
-    s = 0
-    n = len(x) - 1
-    delta_x_div_6 = (b-a) / (6*n) # assumes equidistant x[i] grid
-    for i in range(n):
-        s += (f(x[i]) + 4*f((x[i] + x[i+1])/2) + f(x[i+1])) * delta_x_div_6
-    return s        
-
-def Simpson_sum_better(int_left, int_right):
+def Simpson_sum(int_left, int_right):
     s = 0
     n = n_grid
-    delta_x = (int_right - int_left)/n # assumes equidistant x[i] grid
+    delta_x = (int_right - int_left)/n  # assumes equidistant x[i] grid
     xi = int_left
     for i in range(n):
         s += (f(xi) + 4*f((xi + xi + delta_x)/2) + f(xi + delta_x))
         xi += delta_x
     return s*delta_x/6
 
-def arc_len_Bezier3_approx(P, nSteps):
-    arcLen = 0
-    deltaT = 1/nSteps
-    t = deltaT
 
-    for i in range(nSteps):
-        vector = [0.0,0.0]
-        res1 = eval_Bezier3(P, t)
-        res2 = eval_Bezier3(P, t + deltaT)
+def get_NR_curve_t(s):
+    # set t0
+    t = t_min + s/arc_length_exact(t_max)*(t_max-t_min)
+    print("init t0", t)
+    for it in range(5):
+        t -= (arc_length_exact(t)-s)/d_arc_length_exact(t)
+        print("it t", t)
+    return t
 
-        vector[0] = res2[0] - res1[0]
-        vector[1] = res2[1] - res1[1]
 
-        arcLen += math.sqrt(vector[0]**2 + vector[1]**2)
+def pythagoras(p):
+    res = math.sqrt(p[0]**2+p[1]**2)
+    return res
 
-        t += deltaT
-    return arcLen   
+
+def do_animation(s):
+    global animation_done
+    global V_pos
+    global V_vec
+
+    speed = 1/2
+    u = s*speed
+    t = get_NR_curve_t(u)
+    if (t > t_max):  #
+        animation_done = True
+    else:
+        V_pos = eval_Bezier3(B3, t)
+
+        v = eval_dBezier3(B3, t, speed)
+        V_vec[0], V_vec[1] = v[0] / pythagoras(v), v[1]/pythagoras(v)
+
+
+def f(t):
+    p = eval_dBezier3(B3, t, 1)
+    return math.sqrt(p[0]**2 + p[1]**2)
+
+
+def generate_Riemann_reg_grid(x, n, a, b):
+    delta_x = (b-a)/n
+    for i in range(n+1):
+        x.append(a + i*delta_x)
+
 
 def draw_scene():
     draw_grid(canvas)
@@ -183,12 +190,6 @@ def draw_scene():
     draw_line(canvas, V_pos[0], V_pos[1],
               V_pos[0] + V_vec[0], V_pos[1] + V_vec[1], GREEN)
 
-
-generate_Riemann_reg_grid(t_grid, n_grid, t_min, t_max)
-
-print(f"Simpson arclen: {Simpson_sum(t_grid, t_min, t_max)}")
-print(f"Simpson arclen better: {Simpson_sum_better(t_min, t_max)}")
-print(f"Brute force arclen: {arc_len_Bezier3_approx(B3, 1000)}")
 
 init_time = time.perf_counter()
 prev_draw_time = 0
