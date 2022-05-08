@@ -31,6 +31,7 @@ def do_animation (t):
     if (t > duration): # animation stops at t = duration
         animation_done=True
     else:
+        # x en y transleren over tijd
         B1[1][0] = 6.0 - t
         B1[1][1] = 2.0 + 3*t/duration
 
@@ -46,6 +47,7 @@ def eval_Bezierl(P, t):
     # P (t) = (1-t) P[0] + tP[1]
     res = [0.0, 0.0]
     for xy in range (2):
+        # formulte voor rechte bezier
         res[xy] = (1-t) * P[0][xy] + t*P[1][xy]
     return res
 

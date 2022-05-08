@@ -32,6 +32,7 @@ def do_animation (t):
     if (t > duration): # animation stops at t = duration
         animation_done=True
     else:
+        # transleer 2de punt
         B1[1][0] = 7.0 - t
         B1[1][1] = 0.0 + 6*t/duration
 
@@ -42,13 +43,6 @@ def init_scene():
     do_animation (0.0)
     draw_scene();
 
-
-def eval_Bezier1(P, t):
-    # P (t) = (1-t) P[0] + tP[1]
-    res = [0.0, 0.0]
-    for xy in range (2):
-        res[xy] = (1-t) * P[0][xy] + t*P[1][xy]
-    return res
 
 def eval_Bezier2(P, t):
     # P(t) = (1-t)^2 * P[0] + 2t(1-t)P[1] + t^2*P[2]
@@ -63,10 +57,7 @@ def draw_Bezier(P, nsteps):
     t_delta = 1/nsteps
     t = t_delta
     for ti in range (nsteps):
-        if (len(P) == 2):
-            p = eval_Bezier1(P, t)
-        elif (len(P) == 3):
-            p = eval_Bezier2(P, t)
+        p = eval_Bezier2(P, t)
         draw_line (canvas, xi, yi, p[0], p[1], rgb_col (255,0,0))
         draw_small_square (xi, yi, rgb_col (255,255,0))
         xi = p [0]

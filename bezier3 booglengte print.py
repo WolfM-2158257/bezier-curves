@@ -53,22 +53,6 @@ def init_scene():
     draw_scene()
 
 
-def eval_Bezier1(P, t):
-    # P (t) = (1-t) P[0] + tP[1]
-    res = [0.0, 0.0]
-    for xy in range(2):
-        res[xy] = (1-t) * P[0][xy] + t*P[1][xy]
-    return res
-
-
-def eval_Bezier2(P, t):
-    # P(t) = (1-t)^2 * P[0] + 2t(1-t)P[1] + t^2*P[2]
-    res = [0.0, 0.0]
-    for xy in range(2):
-        res[xy] = (1-t)**2 * P[0][xy] + 2 * t * \
-            (1 - t)*P[1][xy] + t**2 * P[2][xy]
-    return res
-
 
 def eval_Bezier3(P, t):
     # P(t) = (1-t)^3 * P[0] + 3(1-t)^2tP[1] + 3(1-t)t^2*P[2] + t^3P[3]
@@ -76,13 +60,6 @@ def eval_Bezier3(P, t):
     for xy in range(2):
         res[xy] = (1-t)**3 * P[0][xy] + 3*(1-t)**2 * t * \
             P[1][xy] + 3*(1-t) * t**2 * P[2][xy] + t ** 3 * P[3][xy]
-    return res
-
-def eval_dBezier2(P, u, v_factor):
-    res = [0.0, 0.0]
-    for xy in range(2):
-        res[xy] = ((2*P[0][xy] - 4*P[1][xy] + 2*P[2][xy])
-                   * u - 2*P[0][xy] + 2*P[1][xy]) / v_factor
     return res
 
 def eval_dBezier3(P, t, v_factor):
@@ -98,12 +75,7 @@ def draw_Bezier(P, nsteps):
     t_delta = 1/nsteps
     t = t_delta
     for ti in range(nsteps):
-        if (len(P) == 2):
-            p = eval_Bezier1(P, t)
-        elif (len(P) == 3):
-            p = eval_Bezier2(P, t)
-        elif (len(P) == 4):
-            p = eval_Bezier3(P, t)
+        p = eval_Bezier3(P, t)
 
         draw_line(canvas, xi, yi, p[0], p[1], rgb_col(255, 0, 0))
         draw_small_square(xi, yi, rgb_col(255, 255, 0))

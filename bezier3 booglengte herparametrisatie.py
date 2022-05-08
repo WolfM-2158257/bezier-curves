@@ -53,45 +53,20 @@ def init_scene():
     draw_scene()
 
 
-def eval_Bezier1(P, t):
-    # P (t) = (1-t) P[0] + tP[1]
-    res = [0.0, 0.0]
-    for xy in range(2):
-        res[xy] = (1-t) * P[0][xy] + t*P[1][xy]
-    return res
-
-
-def eval_Bezier2(P, t):
-    # P(t) = (1-t)^2 * P[0] + 2t(1-t)P[1] + t^2*P[2]
-    res = [0.0, 0.0]
-    for xy in range(2):
-        res[xy] = (1-t)**2 * P[0][xy] + 2 * t * \
-            (1 - t)*P[1][xy] + t**2 * P[2][xy]
-    return res
-
-
 def eval_Bezier3(P, t):
     # P(t) = (1-t)^3 * P[0] + 3(1-t)^2tP[1] + 3(1-t)t^2*P[2] + t^3P[3]
     res = [0.0, 0.0]
     for xy in range(2):
-        res[xy] = (1-t)**3 * P[0][xy] + 3*(1-t)**2 * t * \
-            P[1][xy] + 3*(1-t) * t**2 * P[2][xy] + t ** 3 * P[3][xy]
+        res[xy] = ((1-t)**3 * P[0][xy] + 3*(1-t)**2 * t *
+                   P[1][xy] + 3*(1-t) * t**2 * P[2][xy] + t ** 3 * P[3][xy])
     return res
 
 
-def eval_dBezier2(P, u):
-    res = [0.0, 0.0]
-    for xy in range(2):
-        res[xy] = ((2*P[0][xy] - 4*P[1][xy] + 2*P[2][xy])
-                   * u - 2*P[0][xy] + 2*P[1][xy])
-    return res
-
-
-def eval_dBezier3(P, t, v_factor):
+def eval_dBezier3(P, t):
     res = [0.0, 0.0]
     for xy in range(2):
         res[xy] = (-3*(1-t)**2*P[0][xy] + (-6*(1-t)*t + 3*(1-t)**2) *
-                   P[1][xy] + (-3*t**2 + 6*(1-t)*t)*P[2][xy] + 3*t**2*P[3][xy]) * v_factor
+                   P[1][xy] + (-3*t**2 + 6*(1-t)*t)*P[2][xy] + 3*t**2*P[3][xy])
     return res
 
 
@@ -101,12 +76,7 @@ def draw_Bezier(P, nsteps):
     t_delta = 1/nsteps
     t = t_delta
     for ti in range(nsteps):
-        if (len(P) == 2):
-            p = eval_Bezier1(P, t)
-        elif (len(P) == 3):
-            p = eval_Bezier2(P, t)
-        elif (len(P) == 4):
-            p = eval_Bezier3(P, t)
+        p = eval_Bezier3(P, t)
 
         draw_line(canvas, xi, yi, p[0], p[1], rgb_col(255, 0, 0))
         draw_small_square(xi, yi, rgb_col(255, 255, 0))
@@ -127,6 +97,12 @@ def arc_length_exact(t):
     return 1/2*root*t + 1/4*math.log(root + 2*t)
 
 
+# de snelheid waarvoor we de integraal berekenen om de lengte van de kromme te berekenen (g'(t) bij get_NR_curve)
+def f(t):
+    p = eval_dBezier3(B3, t)
+    return math.sqrt(p[0]**2 + p[1]**2)
+
+# de totale lengte van de kromme berekenen van links naar rechts (g(t) bij get_NR_curve)
 def Simpson_sum(int_left, int_right):
     s = 0
     n = n_grid
@@ -138,13 +114,14 @@ def Simpson_sum(int_left, int_right):
     return s*delta_x/6
 
 
+# gebruiken newton raphson om g(t) - s = 0 te benaderen ()
 def get_NR_curve_t(s):
     # set t0
-    t = t_min + s/arc_length_exact(t_max)*(t_max-t_min)
-    print("init t0", t)
+    t = t_min + s/Simpson_sum(t_min, t_max)*(t_max-t_min)
+    # print("init t0", t)
     for it in range(5):
-        t -= (arc_length_exact(t)-s)/d_arc_length_exact(t)
-        print("it t", t)
+        t -= (Simpson_sum(t_min, t)-s)/f(t)
+        # print("it t", t)
     return t
 
 
@@ -158,21 +135,16 @@ def do_animation(s):
     global V_pos
     global V_vec
 
-    speed = 1/2
+    speed = 2
     u = s*speed
-    t = get_NR_curve_t(u)
-    if (t > t_max):  #
+    t = get_NR_curve_t(u)  # berekent genormalizeerde t
+    if (t > t_max):
         animation_done = True
     else:
-        V_pos = eval_Bezier3(B3, t)
+        V_pos = eval_Bezier3(B3, t)  # positie
 
-        v = eval_dBezier3(B3, t, speed)
-        V_vec[0], V_vec[1] = v[0] / pythagoras(v), v[1]/pythagoras(v)
-
-
-def f(t):
-    p = eval_dBezier3(B3, t, 1)
-    return math.sqrt(p[0]**2 + p[1]**2)
+        v = eval_dBezier3(B3, t)  # snelheids vector
+        V_vec[0], V_vec[1] = v[0] / pythagoras(v) * speed, v[1]/pythagoras(v) * speed
 
 
 def generate_Riemann_reg_grid(x, n, a, b):

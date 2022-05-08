@@ -42,19 +42,20 @@ def init_scene():
     draw_scene();
 
 
-def eval_Bezier1(P, t):
-    # P (t) = (1-t) P[0] + tP[1]
-    res = [0.0, 0.0]
-    for xy in range (2):
-        res[xy] = (1-t) * P[0][xy] + t*P[1][xy]
-    return res
-
 def eval_Bezier2(P, t):
     # P(t) = (1-t)^2 * P[0] + 2t(1-t)P[1] + t^2*P[2]
     res = [0.0, 0.0]
     for xy in range(2):
         res[xy] = (1-t)**2 * P[0][xy] + 2 * t * (1 - t)*P[1][xy] + t**2 * P[2][xy]
     return res
+
+        
+def eval_dBezier2(P, u, v_factor):
+    res = [0.0,0.0]
+    for xy in range (2):
+        res[xy] = ((2*P[0][xy] - 4*P[1][xy] + 2*P[2][xy])*u - 2*P[0][xy] + 2*P[1][xy]) / v_factor
+    return res
+
 
 def draw_Bezier(P, nsteps):
     xi = P[0][0]
@@ -85,20 +86,10 @@ def do_animation (t):
     if (t > v_factor): # animation stops at t = v_factor
         animation_done = True
     else:
-        #B2[1][0] = 7.0 - t
-        #B2[1][1] = 0.0 + 3*t/v_factor
-        
-        # (2 p_0 - 4 p_1 + 2 p_2) t - 2 p_0 + 2 p_1 
-
+        # calc velocity vector
         V_vec = eval_dBezier2(B2, u, v_factor)
+        # calc position
         V_pos = eval_Bezier2(B2, u)[:]
-        
-def eval_dBezier2(P, u, v_factor):
-    res = [0.0,0.0]
-    for xy in range (2):
-        res[xy] = ((2*P[0][xy] - 4*P[1][xy] + 2*P[2][xy])*u - 2*P[0][xy] + 2*P[1][xy]) / v_factor
-    return res
-
 
 def draw_scene ():
     draw_grid(canvas)
